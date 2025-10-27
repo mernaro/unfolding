@@ -1,0 +1,43 @@
+{
+    "data": {
+        "data_dir": "/projects/memaro/rpujol/unfolding/data",
+        "train_instances": 190,
+        "validation_instances": 190,
+        "evaluation_instances": 190
+    },
+    "model": {
+        "params": {
+            "alpha": {
+                "initialize": 1.0,
+                "is_learnable": true
+            },
+            "beta0": {
+                "initialize": 0.1,
+                "is_learnable": true
+            },
+            "beta1": {
+                "initialize": 0.1,
+                "is_learnable": true
+            },
+            "sigma": {
+                "initialize": 0.2,
+                "is_learnable": true
+            },
+            "nb_intermediate_channels": 1,
+            "nb_iteration": 5,
+            "kernel_size": [5, 5],
+            "taylor": {
+                "nb_iteration": 2,
+                "kernel_size": [5, 5]
+            }
+        }
+    },
+    "train" : {
+        "learning_rate" : 0.01,
+        "nb_epochs" : 10,
+        "training_batch_size" : 32,
+        "validation_batch_size" : 32
+    },
+    "output_dir" : "/projects/memaro/rpujol/unfolding/experiments",
+    "model_dir" : "/projects/memaro/rpujol/unfolding/experiments/2025-10-27_08-47/best_model.pth"
+}
