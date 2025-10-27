@@ -51,3 +51,17 @@ class ImageDataset(data.Dataset):
         maxi = np.max(img)
         normalized = (img - mini)/(maxi - mini)
         return normalized
+        
+def get_batch_with_variable_size_image(batch):
+    imgs_input = []
+    imgs_ground_truth = []
+    imgs_filename = []
+
+    for elem in batch:
+        imgs_input.append(elem[0])
+        imgs_ground_truth.append(elem[1])
+        imgs_filename.append(elem[2])
+
+   
+    # Your custom processing here
+    return imgs_input, imgs_ground_truth, imgs_filename

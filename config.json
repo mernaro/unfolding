@@ -38,5 +38,6 @@
         "training_batch_size" : 32,
         "validation_batch_size" : 32
     },
-    "output_dir" : "/projects/memaro/rpujol/unfolding/experiments"
+    "output_dir" : "/projects/memaro/rpujol/unfolding/experiments",
+    "model_dir" : "/projects/memaro/rpujol/unfolding/experiments/2025-10-27_08-47/best_model.pth"
 }

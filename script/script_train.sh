@@ -23,4 +23,4 @@ export CONFIG_PATH=$PROJECT_PATH/rpujol/unfolding/config.json
 
 ## -- Launch the program
 srun singularity exec $SINGULARITY_PATH $ENVIRONMENT_PATH $PROJECT_PATH/rpujol/unfolding/launcher.py \
-    -c $CONFIG_PATH
+    -c $CONFIG_PATH -a train
