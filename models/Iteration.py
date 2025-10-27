@@ -73,6 +73,8 @@ class Iteration(torch.nn.Module):
             bias=False
         )
 
+        self.metrics = {"alpha": [],"beta0": [],"beta1": [],"sigma": []}
+
          
     def forward(self, STg, decim_row, decim_col, d_x, d_y, b_x, b_y) -> torch.Tensor:
         # COMPUTE f approximation
@@ -151,3 +153,10 @@ class Iteration(torch.nn.Module):
         res = u - term1 - term2
 
         return res
+
+    def update_metrics(self) :
+        self.metrics["alpha"].append(self.alpha.cpu().item())
+        self.metrics["beta0"].append(self.beta0.cpu().item())
+        self.metrics["beta1"].append(self.beta1.cpu().item())
+        self.metrics["sigma"].append(self.sigma.cpu().item())
+        return self.metrics

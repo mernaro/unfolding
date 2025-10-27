@@ -125,6 +125,9 @@ class Unfolding(torch.nn.Module):
         ]
 
         model = Unfolding(*params)
-        device = model_config['device']
+        device = "cuda" if torch.cuda.is_available() else "cpu"
 
         return model.to(device)
+
+    def get_metrics(self):
+        return self.iterations[-1].update_metrics()

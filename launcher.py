@@ -1,5 +1,52 @@
 from models.Unfolding import Unfolding
 from src.Train import train
+from src.datasets.ImageDataset import ImageDataset
+from src.utils.UtilsLauncher import json_reader, data_config_reader,add_dated_folder, json_saver
+from torch.utils import data
+from torch.optim import Adam
+import torch.nn
+import argparse
 
 if __name__ == '__main__' :
-    print("Hello world")
+    print("=== Lancement du script principal ===")
+    parser = argparse.ArgumentParser(
+		description='Training a model to super resolve an image'
+	)
+
+    parser.add_argument("-c", "--config",
+                        help="Path to a specific config. Default: /projects/memaro/rpujol/unfolding/config.json",
+                        default="/projects/memaro/rpujol/unfolding/config.json")
+
+    args = parser.parse_args()
+    config_path = args.config
+    print('\n-- ARGUMENT DU PROGRAME')
+    print(f'\t| Config : {config_path}')
+    
+    config = json_reader(config_path)
+    data_config = config["data"]
+    data_dir, train_instances, validation_instances, evaluation_instances = data_config_reader(config)
+    output_dir = add_dated_folder(config["output_dir"])
+
+    print("Initialisation des datasets...")
+    train_dataset = ImageDataset(train_instances,'train',data_dir=data_dir)
+    train_loader = data.DataLoader(train_dataset,batch_size=train_config["training_batch_size"],shuffle=True)
+
+    val_dataset = ImageDataset(train_instances,'validation',data_dir=data_dir)
+    val_loader = data.DataLoader(val_dataset,batch_size=train_config["validation_batch_size"],shuffle=True)
+    print("Datasets initialisés.")
+
+    print("Initialisation du modèle...")
+    train_config = config["train"]
+    model = Unfolding.from_config(config)
+    print("Modèle initialisé.")
+
+    print("Initialisation de l’optimiseur et de la fonction de perte...")
+    optimizer = Adam(model.parameters(), lr=train_config["learning_rate"])
+    criterion = torch.nn.MSELoss()
+    print("Optimiseur et fonciton de perte initialisés.")
+
+    nb_epochs = train_config["nb_epochs"]
+    print(f"Début de l'entraînement pour {nb_epochs} époques...")
+    train(model,optimizer,criterion,train_loader,32,val_loader,32,nb_epochs,2,output_dir)
+    print("=== Entraînement terminé avec succès ===")
+    json_saver(output_dir, config)
