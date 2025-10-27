@@ -60,8 +60,8 @@ if __name__ == '__main__' :
         nb_epochs = train_config["nb_epochs"]
         print(f"Début de l'entraînement pour {nb_epochs} époques...")
         train(model,optimizer,criterion,train_loader,32,val_loader,32,nb_epochs,2,output_dir)
-        print("=== Entraînement terminé avec succès ===")
         json_saver(output_dir, config)
+        print("=== Entraînement terminé avec succès ===")
         
     elif action == "test" :
         print("Initialisation du modèle...")

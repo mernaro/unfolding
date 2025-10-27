@@ -13,8 +13,8 @@ def evaluation(model,evaluation_loader,output_dir):
     with torch.no_grad():
         for _, (O, L) in enumerate(evaluation_loader):
             for i in range(len(O)):
-                original_true = O[i][0].to(device)
-                low_resolution = L[i][0].to(device)
+                original_true = O[i].to(device)
+                low_resolution = L[i].to(device)
     
                 res_size = original_true.size()
                 inp_size = low_resolution.size()

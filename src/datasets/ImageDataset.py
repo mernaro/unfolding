@@ -10,10 +10,7 @@ class ImageDataset(data.Dataset):
         path_original = os.path.join(data_dir, f"ground_truth")
         path_lowres = os.path.join(data_dir, f"input")
 
-        self.shape_original = self.get_shape(path_original)
-        self.shape_lowres = self.get_shape(path_lowres)
-        self.images_original = torch.zeros((num_instances, *self.shape_original))
-        self.images_low_resolution = torch.zeros((num_instances, *self.shape_lowres))
+        self.items: list[tuple[torch.Tensor, torch.Tensor]] = []
         
         # chargement des fichiers .npy
         for n in range(num_instances):
@@ -28,16 +25,15 @@ class ImageDataset(data.Dataset):
             LR = self.normalize_image(LR)
             
             # reshape et conversion en Tensor
-            self.images_original[n] = torch.from_numpy(O.reshape(self.shape_original))
-            self.images_low_resolution[n] = torch.from_numpy(LR.reshape(self.shape_lowres))
+            self.items.append((torch.from_numpy(O),torch.from_numpy(LR)))
 
     def __getitem__(self, index):
-        img_orig = self.images_original[index]
-        img_lowres = self.images_low_resolution[index]
+        img_orig = self.items[index][0]
+        img_lowres = self.items[index][1]
         return img_orig, img_lowres
 
     def __len__(self):
-        return len(self.images_original)
+        return len(self.items)
 
     def get_shape(self, path):
         first_file = os.path.join(path, "0.npy")
@@ -55,13 +51,12 @@ class ImageDataset(data.Dataset):
 def get_batch_with_variable_size_image(batch):
     imgs_input = []
     imgs_ground_truth = []
-    imgs_filename = []
+    #imgs_filename = []
 
     for elem in batch:
         imgs_input.append(elem[0])
         imgs_ground_truth.append(elem[1])
-        imgs_filename.append(elem[2])
+        #imgs_filename.append(elem[2])
 
-   
     # Your custom processing here
-    return imgs_input, imgs_ground_truth, imgs_filename
+    return imgs_input, imgs_ground_truth

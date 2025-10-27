@@ -10,8 +10,8 @@ def train_epoch(model, optimizer, criterion, train_loader, batch_size):
     for _, (O, L) in enumerate(train_loader):
         optimizer.zero_grad()
         for i in range(len(O)):
-            original_true = O[i][0].to(device)
-            low_resolution = L[i][0].to(device)
+            original_true = O[i].to(device)
+            low_resolution = L[i].to(device)
             
             res_size = original_true.size()
             inp_size = low_resolution.size()
@@ -36,8 +36,8 @@ def validation_epoch(model, optimizer, criterion, validation_loader, batch_size)
     with torch.no_grad():
         for _, (O, L) in enumerate(validation_loader):
             for i in range(len(O)):
-                original_true = O[i][0].to(device)
-                low_resolution = L[i][0].to(device)
+                original_true = O[i].to(device)
+                low_resolution = L[i].to(device)
     
                 res_size = original_true.size()
                 inp_size = low_resolution.size()
