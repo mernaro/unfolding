@@ -46,8 +46,8 @@ class ImageDataset(data.Dataset):
             sample = sample[np.newaxis, :, :]
         return sample.shape
 
-    def normalize_image(img):
-        mini = torch.min(img)
-        maxi = torch.max(img)
+    def normalize_image(self, img):
+        mini = np.min(img)
+        maxi = np.max(img)
         normalized = (img - mini)/(maxi - mini)
         return normalized

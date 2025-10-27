@@ -17,13 +17,20 @@ if __name__ == '__main__' :
                         help="Path to a specific config. Default: /projects/memaro/rpujol/unfolding/config.json",
                         default="/projects/memaro/rpujol/unfolding/config.json")
 
+    parser.add_argument("-a", "--action",
+                        help="The action of the program. Default: train",
+                        default="train")
+
     args = parser.parse_args()
     config_path = args.config
+    action = args.action
     print('\n-- ARGUMENT DU PROGRAME')
     print(f'\t| Config : {config_path}')
+    print(f'\t| Action : {action}')
     
     config = json_reader(config_path)
     data_config = config["data"]
+    train_config = config["train"]
     data_dir, train_instances, validation_instances, evaluation_instances = data_config_reader(config)
     output_dir = add_dated_folder(config["output_dir"])
 
@@ -31,12 +38,14 @@ if __name__ == '__main__' :
     train_dataset = ImageDataset(train_instances,'train',data_dir=data_dir)
     train_loader = data.DataLoader(train_dataset,batch_size=train_config["training_batch_size"],shuffle=True)
 
-    val_dataset = ImageDataset(train_instances,'validation',data_dir=data_dir)
+    val_dataset = ImageDataset(validation_instances,'validation',data_dir=data_dir)
     val_loader = data.DataLoader(val_dataset,batch_size=train_config["validation_batch_size"],shuffle=True)
-    print("Datasets initialisés.")
+
+    evaluation_dataset = ImageDataset(evaluation_instances,'validation',data_dir=data_dir)
+    evaluation_loader = data.DataLoader(evaluation_dataset,batch_size=train_config["validation_batch_size"],shuffle=True)
+    print(f"Datasets initialisés : train({len(train_dataset)}), validation ({len(val_dataset)}), evaluation({len(evaluation_dataset)}).")
 
     print("Initialisation du modèle...")
-    train_config = config["train"]
     model = Unfolding.from_config(config)
     print("Modèle initialisé.")
 

@@ -82,5 +82,5 @@ def train(model, optimizer, criterion, train_loader, batch_size_train, validatio
             print(f"[EARLY STOP] Arrêt anticipé à l’époque {epoch + 1} car aucune amélioration depuis {patience} époques.")
             break
     torch.save(best_model_state, os.path.join(output_dir, "best_model.pth"))
-    print(f"[SAVE] Meilleur modèle sauvegardé dans {os.path.join(output_dir, "best_model.pth")} à l'époque n°{epoch_save}.")
+    print(f"[SAVE] Meilleur modèle sauvegardé dans {os.path.join(output_dir, 'best_model.pth')} à l'époque n°{epoch_save}.")
     plot_metrics(metrics, output_dir)

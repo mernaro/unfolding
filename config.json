@@ -34,7 +34,7 @@
     },
     "train" : {
         "learning_rate" : 0.01,
-        "nb_epochs" : 10,
+        "nb_epochs" : 1,
         "training_batch_size" : 32,
         "validation_batch_size" : 32
     },
