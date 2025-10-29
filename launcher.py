@@ -37,13 +37,15 @@ if __name__ == '__main__' :
     data_dir, train_instances, validation_instances, evaluation_instances = data_config_reader(config)
 
     print("Initialisation des datasets...")
-    train_dataset = ImageDataset(train_instances,'train',data_dir=data_dir)
+    dataset = ImageDataset(train_instances,'train',data_dir=data_dir)
+    train_size = int(0.7 * len(dataset)) 
+    val_size   = int(0.15 * len(dataset))
+    test_size  = len(dataset) - train_size - val_size
+    train_dataset, val_dataset, evaluation_dataset = data.random_split(dataset, [train_size, val_size, test_size])
+
+    
     train_loader = data.DataLoader(train_dataset,batch_size=train_config["training_batch_size"],collate_fn = get_batch_with_variable_size_image,shuffle=True)
-
-    val_dataset = ImageDataset(validation_instances,'validation',data_dir=data_dir)
     val_loader = data.DataLoader(val_dataset,batch_size=train_config["validation_batch_size"],collate_fn = get_batch_with_variable_size_image,shuffle=True)
-
-    evaluation_dataset = ImageDataset(evaluation_instances,'validation',data_dir=data_dir)
     evaluation_loader = data.DataLoader(evaluation_dataset,batch_size=train_config["validation_batch_size"],collate_fn = get_batch_with_variable_size_image,shuffle=True)
     print(f"Datasets initialisés : train({len(train_dataset)}), validation ({len(val_dataset)}), evaluation({len(evaluation_dataset)}).")
 
@@ -58,8 +60,9 @@ if __name__ == '__main__' :
         print("Optimiseur et fonciton de perte initialisés.")
     
         nb_epochs = train_config["nb_epochs"]
+        patience = train_config["patience"]
         print(f"Début de l'entraînement pour {nb_epochs} époques...")
-        train(model,optimizer,criterion,train_loader,32,val_loader,32,nb_epochs,2,output_dir)
+        train(model,optimizer,criterion,train_loader,32,val_loader,32,nb_epochs,patience,output_dir)
         json_saver(output_dir, config)
         print("=== Entraînement terminé avec succès ===")
         

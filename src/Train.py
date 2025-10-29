@@ -5,10 +5,12 @@ from src.utils.UtilsPlot import plot_metrics
 def train_epoch(model, optimizer, criterion, train_loader, batch_size):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     avg_train_loss = 0.0
+    nb_ite = 0
     model.train()
     
     for _, (O, L) in enumerate(train_loader):
         optimizer.zero_grad()
+        nb_ite += len(O)
         for i in range(len(O)):
             original_true = O[i].to(device)
             low_resolution = L[i].to(device)
@@ -25,16 +27,18 @@ def train_epoch(model, optimizer, criterion, train_loader, batch_size):
             loss.backward()
         optimizer.step()
     
-    avg_train_loss /= len(train_loader)
+    avg_train_loss /= nb_ite
     return avg_train_loss
 
 def validation_epoch(model, optimizer, criterion, validation_loader, batch_size):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     avg_validation_loss = 0.0
+    nb_ite = 0
     model.eval()
 
     with torch.no_grad():
         for _, (O, L) in enumerate(validation_loader):
+            nb_ite += len(O)
             for i in range(len(O)):
                 original_true = O[i].to(device)
                 low_resolution = L[i].to(device)
@@ -48,7 +52,7 @@ def validation_epoch(model, optimizer, criterion, validation_loader, batch_size)
                 loss = criterion(original_pred, original_true)
                 avg_validation_loss += loss.item()
 
-    avg_validation_loss /= len(validation_loader)
+    avg_validation_loss /= nb_ite
     return avg_validation_loss
 
 def early_stop(best_validation_loss, avg_validation_loss, epoch_no_improve):

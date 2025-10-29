@@ -130,4 +130,6 @@ class Unfolding(torch.nn.Module):
         return model.to(device)
 
     def get_metrics(self):
-        return self.iterations[-1].update_metrics()
+        list_metrics = [self.iterations[i].update_metrics() for i in range(len(self.iterations))]
+        final_metrics = {k : {i : list_metrics[i][k] for i in range(len(list_metrics)) } for k in list_metrics[0]}
+        return final_metrics
