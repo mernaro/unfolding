@@ -15,7 +15,7 @@ def evaluation(model, evaluation_loader, output_dir):
     with torch.no_grad():
         for _, (O, L, P) in enumerate(evaluation_loader):
             for i in range(len(O)):
-                original_true = O[i].to(device)
+                original_true  = O[i].to(device)
                 low_resolution = L[i].to(device)
                 params = P[i].to(device)
 

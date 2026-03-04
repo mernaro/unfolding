@@ -4,6 +4,7 @@ import numpy as np
 import os
 import pandas as pd
 
+
 class ImageDataset(data.Dataset):
     def __init__(self, num_instances, data_part, data_dir="..."):
         path_original = os.path.join(data_dir, f"{data_part}/ground_truth")
@@ -15,14 +16,13 @@ class ImageDataset(data.Dataset):
         
         # chargement des fichiers .npy
         for n in range(num_instances):
-            file_O = os.path.join(path_original, f"{n}.npy")
-            file_LR = os.path.join(path_lowres, f"{n}.npy")
+            file_O   = os.path.join(path_original, f"{n}.npy")
+            file_LR  = os.path.join(path_lowres,   f"{n}.npy")
+            file_seg = os.path.join(path_seg,       f"{n}.npy")
 
-            # chargement et conversion
-            O = np.load(file_O).astype("float32")
+            O  = np.load(file_O).astype("float32")
             LR = np.load(file_LR).astype("float32")
-
-            O = self.normalize_image(O)
+            O  = self.normalize_image(O)
             LR = self.normalize_image(LR)
 
             row = self.params_df.iloc[n]
@@ -56,11 +56,10 @@ class ImageDataset(data.Dataset):
     def normalize_image(self, img):
         mini = np.min(img)
         maxi = np.max(img)
-        normalized = (img - mini)/(maxi - mini)
-        return normalized
-        
+        return (img - mini) / (maxi - mini)
+
+
 def get_batch_with_variable_size_image(batch):
-    imgs_input = []
     imgs_ground_truth = []
     params_list = []
 

@@ -76,7 +76,7 @@ def show_and_save_3images(original, input_normalized, output, output_dir, id_img
     maxae_output_str = f"{maxae_output:.2f}"
 
     title_full = (
-        f"Mumford-Shah\n"
+        f"Unfolding\n"
         f"Blur filter: {params[0]}x{params[0]}, σ={params[1]} | Decimation: {params[2]}x{params[2]} | SNRdB: {params[4]}\n"
         f"Input (Low-Res) : PSNR: {psnr_input_str} | MSE: {mse_input_str} | MAE: {mae_input_str} | MaxAE: {maxae_input_str}\n"
         f"Reconstruction (High-Res) : PSNR: {psnr_output_str} | MSE: {mse_output_str} | MAE: {mae_output_str} | MaxAE: {maxae_output_str}\n"
