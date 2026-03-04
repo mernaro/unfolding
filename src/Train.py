@@ -1,6 +1,7 @@
 import torch
 import os
 from src.utils.UtilsPlot import plot_metrics
+import time
 
 def train_epoch(model, optimizer, criterion, train_loader, batch_size):
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -8,7 +9,7 @@ def train_epoch(model, optimizer, criterion, train_loader, batch_size):
     nb_ite = 0
     model.train()
     
-    for _, (O, L) in enumerate(train_loader):
+    for _, (O, L, _) in enumerate(train_loader):
         optimizer.zero_grad()
         nb_ite += len(O)
         for i in range(len(O)):
@@ -21,7 +22,6 @@ def train_epoch(model, optimizer, criterion, train_loader, batch_size):
             decim_col = res_size[1] // inp_size[1]
             
             original_pred = model(low_resolution, decim_row, decim_col)
-
             loss = criterion(original_pred, original_true)
             avg_train_loss += loss.item()
             loss.backward()
@@ -37,7 +37,7 @@ def validation_epoch(model, optimizer, criterion, validation_loader, batch_size)
     model.eval()
 
     with torch.no_grad():
-        for _, (O, L) in enumerate(validation_loader):
+        for _, (O, L, _) in enumerate(validation_loader):
             nb_ite += len(O)
             for i in range(len(O)):
                 original_true = O[i].to(device)
@@ -55,15 +55,16 @@ def validation_epoch(model, optimizer, criterion, validation_loader, batch_size)
     avg_validation_loss /= nb_ite
     return avg_validation_loss
 
-def early_stop(best_validation_loss, avg_validation_loss, epoch_no_improve):
-    if avg_validation_loss < best_validation_loss :
+def early_stop(best_validation_loss, avg_validation_loss, epoch_no_improve,min_delta):
+    if avg_validation_loss + min_delta < best_validation_loss :
         best_validation_loss = avg_validation_loss
         epoch_no_improve = 0
     else :
         epoch_no_improve += 1
     return best_validation_loss, epoch_no_improve
 
-def train(model, optimizer, criterion, train_loader, batch_size_train, validation_loader, batch_size_validation, nb_epoch, patience, output_dir):
+def train(model, optimizer, criterion, train_loader, batch_size_train, validation_loader, batch_size_validation, nb_epoch, patience, output_dir,min_delta):
+    start_time_total = time.time()
     best_validation_loss = float("inf")
     epoch_no_improve = 0
     best_model_state = None
@@ -78,13 +79,15 @@ def train(model, optimizer, criterion, train_loader, batch_size_train, validatio
         metrics["validation_loss"].append(avg_validation_loss)
         metrics.update(model.get_metrics())
         
-        best_validation_loss, epoch_no_improve = early_stop(best_validation_loss, avg_validation_loss, epoch_no_improve)
+        best_validation_loss, epoch_no_improve = early_stop(best_validation_loss, avg_validation_loss, epoch_no_improve,min_delta)
         if epoch_no_improve == 0 :
             best_model_state = model.state_dict()
             epoch_save = epoch+1
         if epoch_no_improve == patience :
             print(f"[EARLY STOP] Arrêt anticipé à l’époque {epoch + 1} car aucune amélioration depuis {patience} époques.")
             break
+    total_duration = time.time() - start_time_total
     torch.save(best_model_state, os.path.join(output_dir, "best_model.pth"))
+    print(f"[FIN] Entraînement terminé en {total_duration:.2f}s (environ {total_duration/60:.2f} min et environ {total_duration/3600:.2f} h).")
     print(f"[SAVE] Meilleur modèle sauvegardé dans {os.path.join(output_dir, 'best_model.pth')} à l'époque n°{epoch_save}.")
     plot_metrics(metrics, output_dir)

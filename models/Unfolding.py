@@ -20,7 +20,8 @@ class Unfolding(torch.nn.Module):
         beta1_learnable: bool,
         sigma_learnable: bool,
         taylor_nb_iterations: int,
-        taylor_kernel_size: tuple
+        taylor_kernel_size: tuple,
+        taylor_generic: bool
     ) -> None:
         
         super(Unfolding, self).__init__()
@@ -37,7 +38,8 @@ class Unfolding(torch.nn.Module):
             beta1_learnable,
             sigma_learnable,
             taylor_nb_iterations,
-            taylor_kernel_size
+            taylor_kernel_size,
+            taylor_generic
         ]
 
         iters = [ Iteration(*params) for _ in range(0, nb_iterations) ]
@@ -82,7 +84,6 @@ class Unfolding(torch.nn.Module):
         mini = torch.min(f_approx)
         maxi = torch.max(f_approx)
         normalized = (f_approx - mini) / (maxi - mini)
-
         return normalized
 
     @classmethod
@@ -107,6 +108,7 @@ class Unfolding(torch.nn.Module):
 
         taylor_nb_iterations = params['taylor']['nb_iteration']
         taylor_kernel_size = params['taylor']['kernel_size']
+        taylor_generic = params['taylor_generic']
 
         params = [
             nb_intermediate_channels,
@@ -121,7 +123,8 @@ class Unfolding(torch.nn.Module):
             beta1_learnable,
             sigma_learnable,
             taylor_nb_iterations,
-            taylor_kernel_size
+            taylor_kernel_size,
+            taylor_generic
         ]
 
         model = Unfolding(*params)
