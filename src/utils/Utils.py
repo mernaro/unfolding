@@ -48,6 +48,70 @@ def decimation_adjoint_v2(tensor: torch.Tensor, decim_row: int, decim_col: int) 
         mode='bicubic'
     )
     return res.squeeze(0).squeeze(0)
+    
+def decimation_v3(tensor: torch.Tensor, decim_row: int, decim_col: int) -> torch.Tensor:
+
+    # Remove leading singleton dims until shape is 2D, 3D, or 4D
+    while tensor.dim() > 4 and tensor.shape[0] == 1:
+        tensor = tensor.squeeze(0)
+
+    original_dim = tensor.dim()
+
+    # Normalize to [B,C,H,W]
+    if original_dim == 2:          # [H,W]
+        t = tensor.unsqueeze(0).unsqueeze(0)
+    elif original_dim == 3:        # [C,H,W]
+        t = tensor.unsqueeze(0)
+    elif original_dim == 4:        # [B,C,H,W]
+        t = tensor
+    else:
+        raise ValueError(f"decimation_v3: unsupported shape {tensor.shape}")
+
+    # Apply decimation
+    out = t[:, :, ::decim_row, ::decim_col].clone()
+
+    # Restore original dim
+    if original_dim == 2:
+        return out.squeeze(0).squeeze(0)
+    elif original_dim == 3:
+        return out.squeeze(0)
+    return out
+
+    
+    
+def decimation_adjoint_v3(tensor: torch.Tensor, decim_row: int, decim_col: int) -> torch.Tensor:
+
+    # Remove leading singleton dims until shape is 2D, 3D, or 4D
+    while tensor.dim() > 4 and tensor.shape[0] == 1:
+        tensor = tensor.squeeze(0)
+
+    original_dim = tensor.dim()
+
+    # Normalize to [B,C,H,W]
+    if original_dim == 2:          # [H,W]
+        t = tensor.unsqueeze(0).unsqueeze(0)
+    elif original_dim == 3:        # [C,H,W]
+        t = tensor.unsqueeze(0)
+    elif original_dim == 4:        # [B,C,H,W]
+        t = tensor
+    else:
+        raise ValueError(f"decimation_adjoint_v3: unsupported shape {tensor.shape}")
+
+    B, C, h, w = t.shape
+
+    # Create upsampled output
+    out = torch.zeros(B, C, h * decim_row, w * decim_col,
+                      device=t.device, dtype=t.dtype)
+
+    out[:, :, ::decim_row, ::decim_col] = t
+
+    # Restore original dims
+    if original_dim == 2:
+        return out.squeeze(0).squeeze(0)
+    elif original_dim == 3:
+        return out.squeeze(0)
+    return out
+
 
 
 def multidimensional_soft(d: torch.Tensor, epsilon: float):

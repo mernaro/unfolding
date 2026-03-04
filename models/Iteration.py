@@ -30,7 +30,8 @@ class Iteration(torch.nn.Module):
         beta1_learnable: bool,
         sigma_learnable: bool,
         taylor_nb_iterations: int,
-        taylor_kernel_size: tuple
+        taylor_kernel_size: tuple,
+        method_choice: str
     ) -> None:
 
         super(Iteration, self).__init__()
@@ -42,6 +43,7 @@ class Iteration(torch.nn.Module):
         self.nb_intermediate_channels = nb_intermediate_channels
         self.kernel_size = kernel_size
         self.n = taylor_nb_iterations
+        self.method_choice = method_choice
         
         # Hyper-parameters
         self.alpha = torch.nn.Parameter(
@@ -63,6 +65,11 @@ class Iteration(torch.nn.Module):
             data=torch.tensor([sigma], 
             dtype=torch.float), 
             requires_grad=sigma_learnable
+        )
+
+        self.gamma = torch.nn.Parameter(
+            data=torch.randn(self.n + 1, dtype=torch.float), # n coefficients
+            requires_grad=True
         )
 
         ## H
@@ -95,12 +102,27 @@ class Iteration(torch.nn.Module):
         ##      sigma * [ (nabla_x)^{T} (d_x - b_x) + (nabla_y)^{T} (d_y - b_y) ]
         ##      + alpha * (H^{T} S^{T} g)
         ##  )
-        f = self.taylor_young_ld(
-            x = (sigma_expr + alpha_expr).squeeze(0), 
-            decim_row = decim_row,
-            decim_col = decim_col,
-            n = self.n
-        )
+        if self.method_choice == "old_taylor" :
+            f = self.taylor_young_ld(
+                x = (sigma_expr + alpha_expr).squeeze(0), 
+                decim_row = decim_row,
+                decim_col = decim_col,
+                n = self.n
+            )
+        elif self.method_choice == "new_taylor" :
+            f = self.taylor_young_ld2(
+                x = (sigma_expr + alpha_expr).squeeze(0), 
+                decim_row = decim_row,
+                decim_col = decim_col,
+                n = self.n
+            )
+        elif self.method_choice == "cayley" :
+            f = self.cayley_hamilton(
+                x = (sigma_expr + alpha_expr).squeeze(0), 
+                decim_row = decim_row,
+                decim_col = decim_col,
+                n = self.n
+            )
 
         # Update (d_x, d_y) : Multidimensional Soft Thresholding
         dx_f = Utils.dx(f)
@@ -130,6 +152,25 @@ class Iteration(torch.nn.Module):
             ld = x - self.compute(ld, decim_row, decim_col)
         return ld
 
+    def taylor_young_ld2(self, x, decim_row, decim_col, n, gamma=-1):
+        out = x.clone()
+        coef = 1.0
+        base = x.clone()
+        for k in range(1, n+1):
+            coef *= (gamma - (k - 1)) / k
+            base = self.compute(base, decim_row, decim_col)
+            out += coef * base
+        return out
+
+    def cayley_hamilton(self, x: torch.Tensor, decim_row: int, decim_col: int, n: int) -> torch.Tensor:
+        base = x.clone()
+        out = self.gamma[0] * base.clone()
+        for i in range(1, n+1):
+            base = self.compute(base, decim_row, decim_col) #[alpha H^{T} S^{T} S H + (beta0 + sigma) laplacian]^n
+            out += self.gamma[i] * base #gamma[i] * [alpha H^{T} S^{T} S H + (beta0 + sigma) laplacian]^n
+        return out
+        
+    
     def compute(self, u: torch.Tensor, decim_row: int, decim_col: int) -> torch.Tensor:
         """Computes :
         [I - (alpha H^{T} S^{T} S H + (beta0 + sigma) laplacian)] u
@@ -147,10 +188,16 @@ class Iteration(torch.nn.Module):
         # [(beta0 + sigma) laplacian ] u
         laplacian = Utils.laplacian2D_v2(u)
         term2 = (self.beta0 + self.sigma) * laplacian
-      
+
+        
+        if self.method_choice == "cayley" :
+        # (alpha H^{T} S^{T} S H + (beta0 + sigma) laplacian) u
+        #= [ (alpha H^{T} S^{T} S H ] u + [ (beta0 + sigma) laplacian) ] u
+            res = term1 + term2
+        else :
         # [ I - (alpha H^{T} S^{T} S H + (beta0 + sigma) laplacian) ] u
         #= u - [ (alpha H^{T} S^{T} S H ] u - [ (beta0 + sigma) laplacian) ] u
-        res = u - term1 - term2
+            res = u - term1 - term2
 
         return res
 

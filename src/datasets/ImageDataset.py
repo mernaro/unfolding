@@ -2,35 +2,58 @@ import torch
 from torch.utils import data
 import numpy as np
 import os
+import pandas as pd
+
 
 class ImageDataset(data.Dataset):
     def __init__(self, num_instances, data_part, data_dir="..."):
-        # path_original = os.path.join(data_dir, f"{data_part}/original")
-        # path_lowres = os.path.join(data_dir, f"{data_part}/low_resolution")
-        path_original = os.path.join(data_dir, f"ground_truth")
-        path_lowres = os.path.join(data_dir, f"input")
+        path_original = os.path.join(data_dir, f"{data_part}/ground_truth")
+        path_lowres   = os.path.join(data_dir, f"{data_part}/input")
+        path_params   = os.path.join(data_dir, f"{data_part}/params.csv")
 
-        self.items: list[tuple[torch.Tensor, torch.Tensor]] = []
-        
-        # chargement des fichiers .npy
+        # Masques de segmentation : dossier segmentation/ si existe, sinon ground_truth/
+        path_seg = os.path.join(data_dir, f"{data_part}/segmentation")
+        if not os.path.isdir(path_seg):
+            path_seg = path_original
+
+        print(f"[ImageDataset] Masques charges depuis {path_seg}")
+
+        self.params_df = pd.read_csv(path_params)
+        self.items     = []
+
         for n in range(num_instances):
-            file_O = os.path.join(path_original, f"{n}.npy")
-            file_LR = os.path.join(path_lowres, f"{n}.npy")
+            file_O   = os.path.join(path_original, f"{n}.npy")
+            file_LR  = os.path.join(path_lowres,   f"{n}.npy")
+            file_seg = os.path.join(path_seg,       f"{n}.npy")
 
-            # chargement et conversion
-            O = np.load(file_O).astype("float32")
+            O  = np.load(file_O).astype("float32")
             LR = np.load(file_LR).astype("float32")
-
-            O = self.normalize_image(O)
+            O  = self.normalize_image(O)
             LR = self.normalize_image(LR)
-            
-            # reshape et conversion en Tensor
-            self.items.append((torch.from_numpy(O),torch.from_numpy(LR)))
+
+            seg = np.load(file_seg).astype("float32")
+            if seg.max() > 1.0:
+                seg = (seg > 0).astype("float32")
+
+            row = self.params_df.iloc[n]
+            params_tensor = torch.tensor([
+                row["blur_size"]   if not np.isnan(row["blur_size"])   else 0,
+                row["blur_sigma"]  if not np.isnan(row["blur_sigma"])  else 0,
+                row["decimation"]  if not np.isnan(row["decimation"])  else 0,
+                row["noise_value"] if not np.isnan(row["noise_value"]) else 0,
+                row["noise_db"]    if not np.isnan(row["noise_db"])    else 0,
+            ], dtype=torch.float32)
+
+            self.items.append((
+                torch.from_numpy(O),
+                torch.from_numpy(LR),
+                params_tensor,
+                torch.from_numpy(seg),
+            ))
 
     def __getitem__(self, index):
-        img_orig = self.items[index][0]
-        img_lowres = self.items[index][1]
-        return img_orig, img_lowres
+        img_orig, img_lowres, params, seg = self.items[index]
+        return img_orig, img_lowres, params, seg
 
     def __len__(self):
         return len(self.items)
@@ -45,18 +68,17 @@ class ImageDataset(data.Dataset):
     def normalize_image(self, img):
         mini = np.min(img)
         maxi = np.max(img)
-        normalized = (img - mini)/(maxi - mini)
-        return normalized
-        
+        return (img - mini) / (maxi - mini)
+
+
 def get_batch_with_variable_size_image(batch):
-    imgs_input = []
     imgs_ground_truth = []
-    #imgs_filename = []
-
+    imgs_input        = []
+    params_list       = []
+    seg_list          = []
     for elem in batch:
-        imgs_input.append(elem[0])
-        imgs_ground_truth.append(elem[1])
-        #imgs_filename.append(elem[2])
-
-    # Your custom processing here
-    return imgs_input, imgs_ground_truth
+        imgs_ground_truth.append(elem[0])
+        imgs_input.append(elem[1])
+        params_list.append(elem[2])
+        seg_list.append(elem[3])
+    return imgs_ground_truth, imgs_input, params_list, seg_list
