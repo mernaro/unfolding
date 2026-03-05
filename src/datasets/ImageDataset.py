@@ -61,6 +61,7 @@ class ImageDataset(data.Dataset):
 def get_batch_with_variable_size_image(batch):
     imgs_ground_truth = []
     params_list = []
+    imgs_input = []
 
     for elem in batch:
         imgs_input.append(elem[0])
