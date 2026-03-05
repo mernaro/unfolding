@@ -1,0 +1,29 @@
+{
+    "data": {
+        "data_dir": "/projects/memaro/rpujol/unfolding/data/dataset1",
+        "train_instances": 67,
+        "validation_instances": 14,
+        "evaluation_instances": 15
+    },
+    "model": {
+        "params": {
+            "nb_iteration": 2,
+            "n_channels": 1,
+            "n_residual_blocks": 2,
+            "beta0": {
+                "initialize": 0.1
+            }
+        }
+    },
+    "train": {
+        "learning_rate": 0.0001,
+        "nb_epochs": 1000,
+        "training_batch_size": 32,
+        "validation_batch_size": 32,
+        "patience": 200,
+        "min_delta": 0.0005,
+        "weight_decay": 0.05
+    },
+    "output_dir": "/projects/memaro/mcodjo/unfolding/experiments",
+    "model_dir": "/projects/memaro/mcodjo/unfolding/experiments/2026-03-05_12-39/best_model.pth"
+}

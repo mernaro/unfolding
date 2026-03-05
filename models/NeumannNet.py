@@ -39,7 +39,8 @@ class NeumannNet(nn.Module):
     ):
         super().__init__()
         self.num_iters = nb_iteration
-        self.eta = nn.Parameter(torch.tensor(eta_init))
+        #self.eta = eta_init
+        self.eta = nn.Parameter(torch.tensor(eta_init))  
         self.regularizers = nn.ModuleList(
             [ResidualBlock(n_channels, n_residual_blocks) for _ in range(nb_iteration)]
         )
