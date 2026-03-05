@@ -53,31 +53,33 @@ def compute_metrics(original, output):
     psnr = lasp.metrics.PSNR(original, img_low_res, intensity_max=1)
     mse = lasp.metrics.MSE(original, img_low_res)
     mae = lasp.metrics.MAE(original, img_low_res)
-    #maxae = np.max(np.abs(original - img_low_res))
-    return psnr, mse, mae
+    maxae = np.max(np.abs(original - img_low_res))
+    return psnr, mse, mae, maxae
 
 def show_and_save_3images(original, input_normalized, output, output_dir, id_img, params):
     fig = plt.figure(figsize=(10, 5))
     fig.subplots_adjust(wspace=0.05, hspace=0.1)
 
     # --- Calcul des métriques principales ---
-    psnr_input, mse_input, mae_input = compute_metrics(original, input_normalized)
-    psnr_output, mse_output, mae_output = compute_metrics(original, output)
+    psnr_input, mse_input, mae_input, maxae_input = compute_metrics(original, input_normalized)
+    psnr_output, mse_output, mae_output, maxae_output = compute_metrics(original, output)
 
     # --- Affichage texte ---
     psnr_input_str = f"{psnr_input:.2f}"
     mse_input_str  = f"{mse_input:.4f}"
     mae_input_str  = f"{mae_input:.4f}"
+    maxae_input_str = f"{maxae_input:.2f}"
 
     psnr_output_str = f"{psnr_output:.2f}"
     mse_output_str  = f"{mse_output:.4f}"
     mae_output_str  = f"{mae_output:.4f}"
+    maxae_output_str = f"{maxae_output:.2f}"
 
     title_full = (
-        f"NeumanNet\n"
+        f"Unfolding\n"
         f"Blur filter: {params[0]}x{params[0]}, σ={params[1]} | Decimation: {params[2]}x{params[2]} | SNRdB: {params[4]}\n"
-        f"Input (Low-Res) : PSNR: {psnr_input_str} | MSE: {mse_input_str} | MAE: {mae_input_str}\n"
-        f"Reconstruction (High-Res) : PSNR: {psnr_output_str} | MSE: {mse_output_str} | MAE: {mae_output_str}\n"
+        f"Input (Low-Res) : PSNR: {psnr_input_str} | MSE: {mse_input_str} | MAE: {mae_input_str} | MaxAE: {maxae_input_str}\n"
+        f"Reconstruction (High-Res) : PSNR: {psnr_output_str} | MSE: {mse_output_str} | MAE: {mae_output_str} | MaxAE: {maxae_output_str}\n"
     )
     fig.suptitle(title_full, fontsize=16, y=1.02)
 
@@ -101,33 +103,7 @@ def show_and_save_3images(original, input_normalized, output, output_dir, id_img
     save_path = os.path.join(output_dir, f"{id_img}.png")
     plt.savefig(save_path, bbox_inches='tight')
     plt.close()
-    plot_histogram_gray(output, os.path.join(output_dir, f"{id_img}_hist.png"))
     return (
-        psnr_input, mse_input, mae_input,
-        psnr_output, mse_output, mae_output
+        psnr_input, mse_input, mae_input, maxae_input,
+        psnr_output, mse_output, mae_output, maxae_output
     )
-
-def plot_histogram_gray(image, filename):
-    """
-    Affiche et sauvegarde l'histogramme d'une image en niveaux de gris (valeurs entre 0 et 1).
-
-    Parameters:
-        image (np.ndarray) : tableau 2D ou 3D d'image avec valeurs entre 0 et 1.
-        filename (str) : nom du fichier de sortie (ex: "hist.png").
-    """
-
-    # Vérification que les valeurs sont bien dans [0,1]
-    if image.min() < 0 or image.max() > 1:
-        mini = image.min()
-        maxi = image.max()
-        image = (image - mini) / (maxi - mini + 1e-8)
-
-    plt.figure(figsize=(6,4))
-    plt.hist(image.flatten(), bins=50, range=(0,1))
-    plt.title("Histogramme des niveaux de gris")
-    plt.xlabel("Valeur (0 = noir, 1 = blanc)")
-    plt.ylabel("Nombre de pixels")
-
-    # Sauvegarde dans un fichier
-    plt.savefig(filename, dpi=300)
-    plt.close

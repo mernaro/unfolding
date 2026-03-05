@@ -9,34 +9,20 @@ def train_epoch(model, optimizer, criterion, train_loader, batch_size):
     avg_train_loss = 0.0
     nb_ite = 0
     model.train()
-
-    for _, (O, L, params_list) in enumerate(train_loader):
+    
+    for _, (O, L, _) in enumerate(train_loader):
         optimizer.zero_grad()
         nb_ite += len(O)
-
         for i in range(len(O)):
-            original_true = O[i].to(device)   # [C, H_hr, W_hr]
-            low_res       = L[i].to(device)   # [C, H_lr, W_lr]
-            params        = params_list[i]    # tensor([blur_size, blur_sigma, decimation, noise_value, noise_db])
-
-            # Normalisation de forme : [H, W] → [1, H, W]
-            if original_true.dim() == 2:
-                original_true = original_true.unsqueeze(0)
-            if low_res.dim() == 2:
-                low_res = low_res.unsqueeze(0)
-
-            # params[2] = decimation
-            decim = int(params[2].item())
-            res_size = original_true.size()   # [C, H_hr, W_hr]
-            inp_size = low_res.size()         # [C, H_lr, W_lr]
-            decim_row = res_size[-2] // inp_size[-2]
-            decim_col = res_size[-1] // inp_size[-1]
-
-            # Niveau de bruit 
-            sigma = params[3].item()   # noise_value
-
-            original_pred = model(low_res, decim_row, decim_col, sigma)   # [C, H_hr, W_hr]
-
+            original_true = O[i].to(device)
+            low_resolution = L[i].to(device)
+            
+            res_size = original_true.size()
+            inp_size = low_resolution.size()
+            decim_row = res_size[0] // inp_size[0]
+            decim_col = res_size[1] // inp_size[1]
+            
+            original_pred = model(low_resolution, decim_row, decim_col)
             loss = criterion(original_pred, original_true)
             avg_train_loss += loss.item()
             loss.backward()
@@ -54,47 +40,33 @@ def validation_epoch(model, optimizer, criterion, validation_loader, batch_size)
     model.eval()
 
     with torch.no_grad():
-        for _, (O, L, params_list) in enumerate(validation_loader):
+        for _, (O, L, _) in enumerate(validation_loader):
             nb_ite += len(O)
-
             for i in range(len(O)):
                 original_true = O[i].to(device)
-                low_res       = L[i].to(device)
-                params        = params_list[i]
-
-                # Normalisation de forme : [H, W] → [1, H, W]
-                if original_true.dim() == 2:
-                    original_true = original_true.unsqueeze(0)
-                if low_res.dim() == 2:
-                    low_res = low_res.unsqueeze(0)
-
-                res_size  = original_true.size()
-                inp_size  = low_res.size()
-                decim_row = res_size[-2] // inp_size[-2]
-                decim_col = res_size[-1] // inp_size[-1]
-                sigma     = params[3].item()
-
-                original_pred = model(low_res, decim_row, decim_col, sigma)
-
+                low_resolution = L[i].to(device)
+    
+                res_size = original_true.size()
+                inp_size = low_resolution.size()
+                decim_row = res_size[0] // inp_size[0]
+                decim_col = res_size[1] // inp_size[1]
+                original_pred = model(low_resolution, decim_row, decim_col)
+    
                 loss = criterion(original_pred, original_true)
                 avg_validation_loss += loss.item()
 
     avg_validation_loss /= nb_ite
     return avg_validation_loss
 
-
-def early_stop(best_validation_loss, avg_validation_loss, epoch_no_improve, min_delta):
-    if avg_validation_loss + min_delta < best_validation_loss:
+def early_stop(best_validation_loss, avg_validation_loss, epoch_no_improve,min_delta):
+    if avg_validation_loss + min_delta < best_validation_loss :
         best_validation_loss = avg_validation_loss
         epoch_no_improve = 0
     else:
         epoch_no_improve += 1
     return best_validation_loss, epoch_no_improve
 
-
-def train(model, optimizer, criterion, train_loader, batch_size_train,
-          validation_loader, batch_size_validation, nb_epoch, patience, output_dir, min_delta):
-
+def train(model, optimizer, criterion, train_loader, batch_size_train, validation_loader, batch_size_validation, nb_epoch, patience, output_dir,min_delta):
     start_time_total = time.time()
     best_validation_loss = float("inf")
     epoch_no_improve = 0
@@ -119,7 +91,6 @@ def train(model, optimizer, criterion, train_loader, batch_size_train,
         best_validation_loss, epoch_no_improve = early_stop(
             best_validation_loss, avg_validation_loss, epoch_no_improve, min_delta
         )
-
         if epoch_no_improve == 0:
             best_model_state = model.state_dict()
             epoch_save = epoch + 1
