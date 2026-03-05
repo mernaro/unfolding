@@ -72,4 +72,4 @@ def evaluation(model, evaluation_loader, output_dir):
     csv_path = os.path.join(output_dir, "metrics.csv")
     df.to_csv(csv_path, index=False)
 
-    print(f"\n📊 Fichier de métriques sauvegardé : {csv_path}")
+    print(f"\nðŸ“Š Fichier de mÃ©triques sauvegardÃ© : {csv_path}")

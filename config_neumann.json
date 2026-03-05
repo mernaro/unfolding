@@ -1,19 +1,18 @@
 {
     "data": {
-        "data_dir": "/projects/memaro/rpujol/unfolding/data/dataset2",
+        "data_dir": "/projects/memaro/rpujol/unfolding/data/dataset1",
         "train_instances": 67,
         "validation_instances": 14,
         "evaluation_instances": 15
     },
     "model": {
         "params": {
-            "scale_factor": 2,
-            "max_iterations": 10,
-            "tolerance": 1e-06,
+            "nb_iteration": 10,
+            "n_channels": 1,
             "n_residual_blocks": 8,
-            "eta": 0.1,
-            "feature_channels": 16,
-            "in_channels": 1
+            "beta0": {
+                "initialize": 0.1
+            }
         }
     },
     "train": {
