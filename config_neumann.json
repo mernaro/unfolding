@@ -7,22 +7,23 @@
     },
     "model": {
         "params": {
-            "nb_iteration": 10,
+            "nb_iteration": 2,
             "n_channels": 1,
-            "n_residual_blocks": 8,
+            "n_residual_blocks": 2,
             "beta0": {
                 "initialize": 0.1
             }
         }
     },
     "train": {
-        "learning_rate": 0.001,
+        "learning_rate": 0.0001,
         "nb_epochs": 1000,
-        "training_batch_size": 1,
-        "validation_batch_size": 1,
+        "training_batch_size": 32,
+        "validation_batch_size": 32,
         "patience": 200,
-        "min_delta": 0.0005
+        "min_delta": 0.0005,
+        "weight_decay": 0.05
     },
     "output_dir": "/projects/memaro/mcodjo/unfolding/experiments",
-    "model_dir": "/projects/memaro/mcodjo/unfolding/experiments/2026-02-02_07-08/best_model.pth"
+    "model_dir": "/projects/memaro/mcodjo/unfolding/experiments/2026-03-05_14-30/best_model.pth"
 }
