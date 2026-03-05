@@ -103,31 +103,7 @@ def show_and_save_3images(original, input_normalized, output, output_dir, id_img
     save_path = os.path.join(output_dir, f"{id_img}.png")
     plt.savefig(save_path, bbox_inches='tight')
     plt.close()
-    plot_histogram_gray(output, os.path.join(output_dir, f"{id_img}_hist.png"))
     return (
         psnr_input, mse_input, mae_input, maxae_input,
         psnr_output, mse_output, mae_output, maxae_output
     )
-
-def plot_histogram_gray(image, filename):
-    """
-    Affiche et sauvegarde l'histogramme d'une image en niveaux de gris (valeurs entre 0 et 1).
-
-    Parameters:
-        image (np.ndarray) : tableau 2D ou 3D d'image avec valeurs entre 0 et 1.
-        filename (str) : nom du fichier de sortie (ex: "hist.png").
-    """
-
-    # Vérification que les valeurs sont bien dans [0,1]
-    if image.min() < 0 or image.max() > 1:
-        raise ValueError("L'image doit contenir des valeurs entre 0 et 1.")
-
-    plt.figure(figsize=(6,4))
-    plt.hist(image.flatten(), bins=50, range=(0,1))
-    plt.title("Histogramme des niveaux de gris")
-    plt.xlabel("Valeur (0 = noir, 1 = blanc)")
-    plt.ylabel("Nombre de pixels")
-
-    # Sauvegarde dans un fichier
-    plt.savefig(filename, dpi=300)
-    plt.close
