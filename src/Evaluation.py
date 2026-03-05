@@ -8,7 +8,7 @@ def evaluation(model, evaluation_loader, output_dir):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.eval()
 
-    # Stockage des mÃ©triques
+    # Stockage des métriques
     psnr_input_list, mse_input_list, mae_input_list, maxae_input_list = [], [], [], []
     psnr_output_list, mse_output_list, mae_output_list, maxae_output_list = [], [], [], []
 

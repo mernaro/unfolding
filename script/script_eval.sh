@@ -1,7 +1,7 @@
 #!/bin/sh
 
 ## -- Name and log files
-#SBATCH --job-name=Test-model-eval
+#SBATCH --job-name=Evaluation-unfolding
 #SBATCH --output=ML-%j/-Exp.out
 #SBATCH --error=ML-%j/-Exp.err
 

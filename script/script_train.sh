@@ -1,14 +1,14 @@
 #!/bin/sh
 
 ## -- Name and log files
-#SBATCH --job-name=Test-model-train
+#SBATCH --job-name=Train-unfolding
 #SBATCH --output=ML-%j/-Exp.out
 #SBATCH --error=ML-%j/-Exp.err
 
 ## -- Param 
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
-#SBATCH --partition=GPUNodes
+#SBATCH --partition=RTX8000Nodes
 #SBATCH --gres=gpu:1
 #SBATCH --gres-flags=enforce-binding
 
