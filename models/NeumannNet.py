@@ -1,26 +1,6 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-
-
-def op_A(x: torch.Tensor, decim_row: int, decim_col: int) -> torch.Tensor:
-    return F.avg_pool2d(
-        x.unsqueeze(0),
-        kernel_size=(decim_row, decim_col),
-        stride=(decim_row, decim_col),
-    ).squeeze(0)
-
-
-def op_At(y: torch.Tensor, decim_row: int, decim_col: int) -> torch.Tensor:
-    return F.interpolate(
-        y.unsqueeze(0),
-        scale_factor=(decim_row, decim_col),
-        mode="nearest",
-    ).squeeze(0)
-
-
-def op_AtA(x: torch.Tensor, decim_row: int, decim_col: int) -> torch.Tensor:
-    return op_At(op_A(x, decim_row, decim_col), decim_row, decim_col)
+import src.utils.Utils as Utils
 
 
 class ResidualBlock(nn.Module):
@@ -36,7 +16,17 @@ class ResidualBlock(nn.Module):
         self.body = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.body(x)
+        original_dim = x.dim()
+        if original_dim == 2:
+            x = x.unsqueeze(0).unsqueeze(0)
+        elif original_dim == 3:
+            x = x.unsqueeze(0)
+        out = self.body(x)
+        if original_dim == 2:
+            return out.squeeze(0).squeeze(0)
+        elif original_dim == 3:
+            return out.squeeze(0)
+        return out
 
 
 class NeumannNet(nn.Module):
@@ -56,34 +46,44 @@ class NeumannNet(nn.Module):
 
     @classmethod
     def from_config(cls, config: dict) -> "NeumannNet":
-        p = config["model"]["params"]
-        return cls(
-            nb_iteration=p["nb_iteration"],
-            n_channels=p.get("n_channels", 1),
-            n_residual_blocks=p.get("n_residual_blocks", 2),
-            eta_init=p["beta0"]["initialize"],
-        )
+      p = config["model"]["params"]
+      model = cls(
+          nb_iteration      = p["nb_iteration"],
+          n_channels        = p.get("n_channels", 1),
+          n_residual_blocks = p.get("n_residual_blocks", 2),
+          eta_init          = p["beta0"]["initialize"],
+      )
+      device = "cuda" if torch.cuda.is_available() else "cpu"
+      return model.to(device)
 
     def forward(
         self,
         y: torch.Tensor,
         decim_row: int,
         decim_col: int,
-        sigma: float = 0.0,  
+        sigma: float = 0.0,
     ) -> torch.Tensor:
-        if y.dim() == 2:
-            y = y.unsqueeze(0)  
+        if y.dim() == 3:
+            y = y.squeeze(0)
 
-        x0 = self.eta * op_At(y, decim_row, decim_col)
+        Aty         = Utils.decimation_adjoint(y, decim_row, decim_col)
+        x0          = self.eta * Aty
         runner      = x0
         neumann_sum = runner
-        for ii in range(self.num_iters):
-            linear_component = runner - self.eta * op_AtA(runner, decim_row, decim_col)
-            learned_component = -self.regularizers[ii](runner.unsqueeze(0)).squeeze(0)
 
-            runner      = linear_component + learned_component
-            neumann_sum = neumann_sum + runner
-        return neumann_sum  
+        for ii in range(self.num_iters):
+            AtAx              = Utils.decimation_adjoint(Utils.decimation(runner, decim_row, decim_col), decim_row, decim_col)
+            linear_component  = runner - self.eta * AtAx
+            learned_component = -self.regularizers[ii](runner)
+            runner            = linear_component + learned_component
+            neumann_sum       = neumann_sum + runner
+
+        
+        mini        = torch.min(neumann_sum)
+        maxi        = torch.max(neumann_sum)
+        neumann_sum = (neumann_sum - mini) / (maxi - mini)
+
+        return neumann_sum
 
     def get_metrics(self) -> dict:
         return {"eta": [self.eta.item()]}

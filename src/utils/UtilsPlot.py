@@ -103,7 +103,6 @@ def show_and_save_3images(original, input_normalized, output, output_dir, id_img
     save_path = os.path.join(output_dir, f"{id_img}.png")
     plt.savefig(save_path, bbox_inches='tight')
     plt.close()
-    plot_histogram_gray(output, os.path.join(output_dir, f"{id_img}_hist.png"))
     return (
         psnr_input, mse_input, mae_input, maxae_input,
         psnr_output, mse_output, mae_output, maxae_output

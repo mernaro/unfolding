@@ -18,7 +18,6 @@ class ImageDataset(data.Dataset):
         for n in range(num_instances):
             file_O   = os.path.join(path_original, f"{n}.npy")
             file_LR  = os.path.join(path_lowres,   f"{n}.npy")
-            file_seg = os.path.join(path_seg,       f"{n}.npy")
 
             O  = np.load(file_O).astype("float32")
             LR = np.load(file_LR).astype("float32")
@@ -62,6 +61,7 @@ class ImageDataset(data.Dataset):
 def get_batch_with_variable_size_image(batch):
     imgs_ground_truth = []
     params_list = []
+    imgs_input = []
 
     for elem in batch:
         imgs_input.append(elem[0])
